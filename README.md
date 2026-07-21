@@ -53,6 +53,18 @@ npm run build
 
 Import the GitHub repository into Vercel, then add `GROQ_API_KEY`, `GROQ_MODEL`, and `GITHUB_TOKEN` in **Project Settings → Environment Variables**. Do not commit `.env.local`.
 
+## Contributing
+
+1. Pick an issue labeled `good first issue` or `help wanted`.
+2. Create a branch with a short, descriptive name.
+3. Run quality checks before opening a pull request:
+
+   ```bash
+   npm run lint
+   npx tsc --noEmit
+   npm run build
+   ```
+
 ## Codex collaboration
 
 Codex accelerated the implementation work: scaffolding the Next.js app, shaping the GitHub ingestion boundary, integrating Groq structured outputs, adding robust response handling, and iterating on the presentation polish.
