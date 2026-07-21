@@ -58,6 +58,8 @@ const entryFileCandidates = [
   "src/app.ts",
   "src/server.ts",
 ] as const;
+const maxEntryFilesForArchitecture = 4;
+const entryFileClipLength = 600;
 
 function clip(value: string, limit: number) {
   return value.length > limit ? `${value.slice(0, limit)}\n[truncated]` : value;
@@ -265,7 +267,7 @@ const rankingSchema = {
           first_steps: {
             type: "array",
             minItems: 1,
-            maxItems: 5,
+            maxItems: 3,
             items: { type: "string" },
           },
         },
@@ -309,12 +311,14 @@ export async function POST(request: Request) {
 
     const tree = allTreePaths.filter((path) => path.split("/").length <= 3).slice(0, 160);
 
-    const existingEntryFiles = entryFileCandidates.filter((path) => allTreePathSet.has(path));
+    const existingEntryFiles = entryFileCandidates
+      .filter((path) => allTreePathSet.has(path))
+      .slice(0, maxEntryFilesForArchitecture);
     const entryFiles = (
       await Promise.all(
         existingEntryFiles.map(async (path) => ({
           path,
-          content: clip(await content(owner, repo, path), 1300),
+          content: clip(await content(owner, repo, path), entryFileClipLength),
         })),
       )
     ).filter((file) => file.content.trim().length > 0);
@@ -346,7 +350,7 @@ export async function POST(request: Request) {
         ? await groq<RankedIssuesResponse>(
             "issue_ranking",
             rankingSchema,
-            "Rank up to four best-fit issues only from the provided list. Never invent an issue, number, title, URL, module, file, or implementation detail. Ground each reason in issue text and architecture summary. Include files_to_start_with using ONLY provided existing file paths; if uncertain, return an empty list. Include first_steps as concrete bullets that start with action verbs such as Read, Run, or Edit.",
+            "Rank up to four best-fit issues only from the provided list. Never invent an issue, number, title, URL, module, file, or implementation detail. Ground each reason in issue text and architecture summary. Include files_to_start_with using ONLY provided existing file paths; if uncertain, return an empty list. Include first_steps as 1-3 concrete bullets that start with action verbs such as Read, Run, or Edit.",
             {
               architecture,
               issues: issuesForRanking,
@@ -364,7 +368,10 @@ export async function POST(request: Request) {
     const sanitizedRecommendations = recommendations.recommended_issues.map((item) => ({
       ...item,
       files_to_start_with: item.files_to_start_with.filter((path) => allTreePathSet.has(path)),
-      first_steps: item.first_steps.map((step) => step.trim()).filter(Boolean),
+      first_steps: item.first_steps
+        .map((step) => step.trim())
+        .filter(Boolean)
+        .slice(0, 3),
     }));
 
     return NextResponse.json({
