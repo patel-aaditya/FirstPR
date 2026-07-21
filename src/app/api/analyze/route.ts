@@ -68,7 +68,10 @@ function parseRepo(value: string) {
     const url = new URL(value);
     if (url.hostname !== "github.com") return null;
     const [owner, repo] = url.pathname.split("/").filter(Boolean);
-    return owner && repo ? { owner, repo: repo.replace(/\.git$/, "") } : null;
+    const normalizedRepo = repo?.replace(/\.git$/, "");
+    const segmentPattern = /^[A-Za-z0-9_.-]+$/;
+    if (!owner || !normalizedRepo || !segmentPattern.test(owner) || !segmentPattern.test(normalizedRepo)) return null;
+    return { owner, repo: normalizedRepo };
   } catch {
     return null;
   }
@@ -84,8 +87,14 @@ function mapGitHubError(path: string, status: number, details?: unknown) {
 async function github<T>(path: string): Promise<T> {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new UserFacingError("Invalid GitHub token.", { status: 500, cause: "Missing GITHUB_TOKEN" });
+  if (!path.startsWith("/repos/")) throw new UserFacingError("GitHub request failed.", { status: 500, cause: { path, reason: "unsafe path" } });
 
-  const response = await fetch(`${githubBase}${path}`, {
+  const requestUrl = new URL(path, githubBase);
+  if (requestUrl.origin !== githubBase) {
+    throw new UserFacingError("GitHub request failed.", { status: 500, cause: { path, reason: "origin mismatch" } });
+  }
+
+  const response = await fetch(requestUrl, {
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: "Bearer ".concat(token),
