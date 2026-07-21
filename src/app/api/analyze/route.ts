@@ -322,10 +322,11 @@ export async function POST(request: Request) {
     const issues = issueCollection.issues.map((issue) => ({
       number: issue.number,
       title: issue.title,
-      body: clip(issue.body ?? "", 2200),
+      body: clip(issue.body ?? "", 600),
       labels: issue.labels.map((label) => label.name),
       url: issue.html_url,
     }));
+    const issuesForRanking = issues.slice(0, 10);
 
     const architecture = await groq<{ overview: string; modules: { name: string; path: string; purpose: string }[] }>(
       "architecture_summary",
@@ -341,14 +342,14 @@ export async function POST(request: Request) {
     );
 
     const recommendations: RankedIssuesResponse =
-      issues.length > 0
+      issuesForRanking.length > 0
         ? await groq<RankedIssuesResponse>(
             "issue_ranking",
             rankingSchema,
             "Rank up to four best-fit issues only from the provided list. Never invent an issue, number, title, URL, module, file, or implementation detail. Ground each reason in issue text and architecture summary. Include files_to_start_with using ONLY provided existing file paths; if uncertain, return an empty list. Include first_steps as concrete bullets that start with action verbs such as Read, Run, or Edit.",
             {
               architecture,
-              issues,
+              issues: issuesForRanking,
               existing_files: tree,
               fallback_recommendation: issueCollection.usedFallback,
               user: {
