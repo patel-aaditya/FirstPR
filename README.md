@@ -66,6 +66,8 @@ FirstPR was built through Codex CLI, powered by GPT-5.6, in an interactive, conv
 - Extended the architecture call to read real entry-point files (`package.json`, `main.py`, `src/index.ts`, etc.) instead of relying on the README alone, materially improving the quality of the codebase explanation
 - Iterated on a UI polish pass — paragraph structure, spacing, type hierarchy — for a cleaner on-camera demo
 - Diagnosed and fixed a Groq rate-limit issue late in the build: the entry-file and issue-context additions had pushed both LLM calls over Groq's free-tier 8K TPM cap, which Codex resolved by trimming per-file/per-issue truncation limits and reducing the entry-file fetch to the most relevant few
+- ChatGPT helped craft and refine the prompting strategy used for both structured Groq analyses, and also reviewed prompt clarity, constraint coverage, and output-shape consistency to reduce hallucinations and improve ranking quality.
+
 
 **Product and design decisions that were mine:**
 - FirstPR stays focused on one contributor's immediate next step, not a general-purpose repo explorer
