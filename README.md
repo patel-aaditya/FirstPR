@@ -45,10 +45,6 @@ npx tsc --noEmit
 npm run build
 ```
 
-## Deploy to Vercel
-
-Import the GitHub repository into Vercel, then add `GROQ_API_KEY`, `GROQ_MODEL`, and `GITHUB_TOKEN` in **Project Settings → Environment Variables**. Do not commit `.env.local`.
-
 ## Contributing
 
 1. Pick an issue labeled `good first issue` or `help wanted`.
